@@ -1,5 +1,15 @@
 require('dotenv').config()
 
+process.on('uncaughtException', (err) => {
+	console.error('[uncaughtException]', err.message)
+	console.error(err.stack)
+	process.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+	console.error('[unhandledRejection]', reason)
+})
+
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
