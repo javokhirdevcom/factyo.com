@@ -285,6 +285,29 @@ const en: DeepRecord = {
     goDashboard: 'Go to Dashboard',
     emailSent: 'A confirmation email has been sent to your inbox.',
   },
+  cookie: {
+    title: 'We use cookies',
+    body: 'We use cookies to keep you logged in and — with your consent — to measure website usage via Google Analytics. We never sell your data.',
+    accept: 'Accept all',
+    reject: 'Only essential',
+    learnMore: 'Cookie Policy',
+  },
+  legal: {
+    privacy: 'Privacy Policy',
+    terms: 'Terms & Conditions',
+    cookies: 'Cookie Policy',
+    contact: 'Contact',
+    backToHome: 'Back to homepage',
+    lastUpdated: 'Last updated',
+  },
+  footer: {
+    legal: 'Legal',
+    company: 'Company',
+    kvk: 'KvK',
+    btw: 'BTW',
+    rights: 'All rights reserved.',
+    poweredBy: 'Payments by Stripe.',
+  },
 }
 
 const ru: DeepRecord = {
@@ -562,6 +585,29 @@ const ru: DeepRecord = {
     premium: 'Factyo Premium',
     goDashboard: 'На главную',
     emailSent: 'Письмо с подтверждением отправлено на вашу почту.',
+  },
+  cookie: {
+    title: 'Мы используем файлы cookie',
+    body: 'Мы используем файлы cookie для входа в систему и — с вашего согласия — для измерения посещаемости через Google Analytics. Мы никогда не продаём ваши данные.',
+    accept: 'Принять все',
+    reject: 'Только необходимые',
+    learnMore: 'Политика cookie',
+  },
+  legal: {
+    privacy: 'Политика конфиденциальности',
+    terms: 'Условия использования',
+    cookies: 'Политика cookie',
+    contact: 'Контакты',
+    backToHome: 'На главную',
+    lastUpdated: 'Последнее обновление',
+  },
+  footer: {
+    legal: 'Правовая информация',
+    company: 'Компания',
+    kvk: 'КвК',
+    btw: 'НДС',
+    rights: 'Все права защищены.',
+    poweredBy: 'Платежи через Stripe.',
   },
 }
 
@@ -841,6 +887,29 @@ const tr: DeepRecord = {
     goDashboard: 'Panele Git',
     emailSent: 'Onay e-postası gelen kutunuza gönderildi.',
   },
+  cookie: {
+    title: 'Çerezler kullanıyoruz',
+    body: 'Oturum açmak ve — izninizle — Google Analytics aracılığıyla site kullanımını ölçmek için çerezler kullanıyoruz. Verilerinizi asla satmıyoruz.',
+    accept: 'Tümünü kabul et',
+    reject: 'Yalnızca zorunlu',
+    learnMore: 'Çerez Politikası',
+  },
+  legal: {
+    privacy: 'Gizlilik Politikası',
+    terms: 'Kullanım Şartları',
+    cookies: 'Çerez Politikası',
+    contact: 'İletişim',
+    backToHome: 'Ana sayfaya dön',
+    lastUpdated: 'Son güncelleme',
+  },
+  footer: {
+    legal: 'Yasal',
+    company: 'Şirket',
+    kvk: 'KvK',
+    btw: 'BTW',
+    rights: 'Tüm haklar saklıdır.',
+    poweredBy: "Ödemeler Stripe ile.",
+  },
 }
 
 const nl: DeepRecord = {
@@ -1118,6 +1187,29 @@ const nl: DeepRecord = {
     premium: 'Factyo Premium',
     goDashboard: 'Naar Dashboard',
     emailSent: 'Een bevestigingsmail is verzonden naar uw inbox.',
+  },
+  cookie: {
+    title: 'Wij gebruiken cookies',
+    body: 'We gebruiken cookies om u ingelogd te houden en — met uw toestemming — het websitegebruik te meten via Google Analytics. Uw gegevens worden nooit verkocht.',
+    accept: 'Alles accepteren',
+    reject: 'Alleen noodzakelijk',
+    learnMore: 'Cookiebeleid',
+  },
+  legal: {
+    privacy: 'Privacyverklaring',
+    terms: 'Algemene Voorwaarden',
+    cookies: 'Cookiebeleid',
+    contact: 'Contact',
+    backToHome: 'Terug naar home',
+    lastUpdated: 'Laatst bijgewerkt',
+  },
+  footer: {
+    legal: 'Juridisch',
+    company: 'Bedrijf',
+    kvk: 'KvK',
+    btw: 'BTW',
+    rights: 'Alle rechten voorbehouden.',
+    poweredBy: 'Betalingen via Stripe.',
   },
 }
 

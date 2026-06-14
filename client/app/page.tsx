@@ -324,18 +324,75 @@ export default function LandingPage() {
 			</section>
 
 			{/* FOOTER */}
-			<footer className='bg-white border-t border-gray-100 py-8'>
-				<div className='max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400'>
-					<div className='flex items-center gap-2'>
-						<div className='w-6 h-6 rounded-md factyo-gradient flex items-center justify-center'>
-							<FileText className='w-3 h-3 text-white' />
+			<footer className='bg-white border-t border-gray-100 pt-12 pb-8'>
+				<div className='max-w-6xl mx-auto px-6'>
+					{/* Top row: brand + columns */}
+					<div className='grid grid-cols-2 md:grid-cols-4 gap-8 mb-10'>
+						{/* Brand */}
+						<div className='col-span-2 md:col-span-1 space-y-3'>
+							<Link href='/' className='flex items-center gap-2'>
+								<div className='w-7 h-7 rounded-lg factyo-gradient flex items-center justify-center'>
+									<FileText className='w-3.5 h-3.5 text-white' />
+								</div>
+								<span className='font-extrabold text-gray-900 tracking-tight'>
+									Fact<span style={{ color: '#FF2D78' }}>yo</span>
+								</span>
+							</Link>
+							<p className='text-xs text-gray-400 leading-relaxed'>
+								Professioneel factureren voor Nederlandse ZZP'ers en freelancers.
+							</p>
 						</div>
-						<span className='font-bold text-gray-700'>Factyo</span>
+
+						{/* Product */}
+						<div className='space-y-3'>
+							<p className='text-xs font-bold text-gray-900 uppercase tracking-wider'>Product</p>
+							<ul className='space-y-2 text-xs text-gray-500'>
+								<li><Link href='/pricing' className='hover:text-gray-800 transition-colors'>Prijzen</Link></li>
+								<li><Link href='/register' className='hover:text-gray-800 transition-colors'>Gratis beginnen</Link></li>
+								<li><Link href='/login' className='hover:text-gray-800 transition-colors'>Inloggen</Link></li>
+							</ul>
+						</div>
+
+						{/* Legal */}
+						<div className='space-y-3'>
+							<p className='text-xs font-bold text-gray-900 uppercase tracking-wider'>{t('footer.legal')}</p>
+							<ul className='space-y-2 text-xs text-gray-500'>
+								<li><Link href='/privacy' className='hover:text-gray-800 transition-colors'>{t('legal.privacy')}</Link></li>
+								<li><Link href='/terms' className='hover:text-gray-800 transition-colors'>{t('legal.terms')}</Link></li>
+								<li><Link href='/cookies' className='hover:text-gray-800 transition-colors'>{t('legal.cookies')}</Link></li>
+							</ul>
+						</div>
+
+						{/* Company info (KvK / BTW) */}
+						<div className='space-y-3'>
+							<p className='text-xs font-bold text-gray-900 uppercase tracking-wider'>{t('footer.company')}</p>
+							<ul className='space-y-1.5 text-xs text-gray-500'>
+								<li>
+									<span className='font-medium text-gray-700'>Factyo</span>
+								</li>
+								{/* TODO: fill in after KvK registration */}
+								<li>{t('footer.kvk')}: <span className='font-mono'>12345678</span></li>
+								<li>{t('footer.btw')}: <span className='font-mono'>NL000000000B01</span></li>
+								<li className='leading-snug'>
+									Voorbeeldstraat 1<br />
+									1234 AB Amsterdam
+								</li>
+								<li>
+									<a
+										href='mailto:info@factyo.com'
+										className='hover:text-gray-800 transition-colors'
+									>
+										info@factyo.com
+									</a>
+								</li>
+							</ul>
+						</div>
 					</div>
-					<p>&copy; {new Date().getFullYear()} Factyo. {t('landing.footerCopy')}</p>
-					<div className='flex gap-6'>
-						<Link href='/pricing' className='hover:text-gray-700 transition-colors'>Pricing</Link>
-						<Link href='/login' className='hover:text-gray-700 transition-colors'>Login</Link>
+
+					{/* Bottom bar */}
+					<div className='border-t border-gray-100 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-400'>
+						<p>&copy; {new Date().getFullYear()} Factyo. {t('footer.rights')}</p>
+						<p>{t('footer.poweredBy')}</p>
 					</div>
 				</div>
 			</footer>
