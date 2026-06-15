@@ -65,9 +65,14 @@ export const authOptions: NextAuthOptions = {
 			}
 			try {
 				const { data } = await axiosClient.get(`/api/user/profile/${token.id}`)
-				session.currentUser = data.user
-			} catch {
-				// profile fetch failed — session still valid
+				if (data?.user) {
+					session.currentUser = data.user
+				} else {
+					console.error('[session] Profile fetch returned no user for token.id:', token.id)
+				}
+			} catch (err: unknown) {
+				const msg = err instanceof Error ? err.message : String(err)
+				console.error('[session] Failed to fetch user profile:', msg)
 			}
 			return session
 		},

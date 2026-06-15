@@ -31,6 +31,7 @@ export default function SettingsPage() {
 	const [cancelling, setCancelling] = useState(false)
 	const [logoUploading, setLogoUploading] = useState(false)
 	const user = (session as any)?.currentUser
+	const userId: string | undefined = user?._id ?? session?.user?.id
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(profileSchema),
@@ -51,7 +52,7 @@ export default function SettingsPage() {
 
 	async function onSubmit(values: FormValues) {
 		setSaving(true)
-		const res = await updateProfileAction({ userId: user._id, ...values })
+		const res = await updateProfileAction({ userId: userId!, ...values })
 		if (res?.data?.user) {
 			toast.success(t('settings.saved'))
 			await update()
@@ -69,7 +70,7 @@ export default function SettingsPage() {
 			const res = await startLogoUpload([file])
 			const url = res?.[0]?.url
 			if (url) {
-				await updateLogoAction({ userId: user._id, logoUrl: url })
+				await updateLogoAction({ userId: userId!, logoUrl: url })
 				toast.success(t('settings.uploadSuccess'))
 				await update()
 			}
@@ -81,7 +82,7 @@ export default function SettingsPage() {
 
 	const handleCancelSubscription = async () => {
 		setCancelling(true)
-		const res = await cancelSubscriptionAction({ userId: user._id })
+		const res = await cancelSubscriptionAction({ userId: userId! })
 		if (res?.data?.success) {
 			toast.success(t('settings.cancelled'))
 			await update()
@@ -180,7 +181,7 @@ export default function SettingsPage() {
 								<button
 									type='button'
 									onClick={async () => {
-										await updateLogoAction({ userId: user._id, logoUrl: '' })
+										await updateLogoAction({ userId: userId!, logoUrl: '' })
 										toast.success(t('settings.saved'))
 										await update()
 									}}

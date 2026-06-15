@@ -21,24 +21,26 @@ const fmt = (n: number) =>
 
 export default function DashboardPage() {
 	const { t } = useLanguage()
-	const { data: session } = useSession()
+	const { data: session, status } = useSession()
 	const [invoices, setInvoices] = useState<IInvoice[]>([])
 	const [loading, setLoading] = useState(true)
 
 	const user = (session as any)?.currentUser
+	const userId: string | undefined = user?._id ?? session?.user?.id
 	const plan = user?.plan ?? 'free'
 	const invoiceCount = user?.invoiceCount ?? 0
 
 	useEffect(() => {
+		if (status === 'loading') return
 		const load = async () => {
-			const userId = user?._id
-			if (!userId) return
+			if (!userId) { setLoading(false); return }
+			setLoading(true)
 			const res = await getInvoicesAction({ userId })
 			if (res?.data?.invoices) setInvoices(res.data.invoices)
 			setLoading(false)
 		}
-		if (user) load()
-	}, [user])
+		load()
+	}, [userId, status])
 
 	const paidInvoices = invoices.filter(i => i.status === 'paid')
 	const sentInvoices = invoices.filter(i => i.status === 'sent')

@@ -20,19 +20,19 @@ const fmt = (n: number) =>
 
 export default function InvoicesPage() {
 	const { t } = useLanguage()
-	const { data: session } = useSession()
+	const { data: session, status } = useSession()
 	const [invoices, setInvoices] = useState<IInvoice[]>([])
 	const [loading, setLoading] = useState(true)
 	const [deleting, setDeleting] = useState<string | null>(null)
 	const [confirmId, setConfirmId] = useState<string | null>(null)
 
 	const user = (session as any)?.currentUser
+	const userId: string | undefined = user?._id ?? session?.user?.id
 	const plan = user?.plan ?? 'free'
 	const invoiceCount = user?.invoiceCount ?? 0
 
 	const load = async () => {
-		const userId = user?._id
-		if (!userId) return
+		if (!userId) { setLoading(false); return }
 		setLoading(true)
 		const res = await getInvoicesAction({ userId })
 		if (res?.data?.invoices) setInvoices(res.data.invoices)
@@ -40,13 +40,15 @@ export default function InvoicesPage() {
 	}
 
 	useEffect(() => {
-		if (user) load()
+		if (status === 'loading') return
+		load()
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user])
+	}, [userId, status])
 
 	const handleDelete = async (id: string) => {
+		if (!userId) return
 		setDeleting(id)
-		const res = await deleteInvoiceAction({ userId: user._id, invoiceId: id })
+		const res = await deleteInvoiceAction({ userId, invoiceId: id })
 		if (res?.data?.success) {
 			toast.success(t('invoices.deleted'))
 			setInvoices(prev => prev.filter(i => i._id !== id))

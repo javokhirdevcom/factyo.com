@@ -75,7 +75,7 @@ class AuthController {
 			// 1. JWT Token yaratamiz (agar frontend NextAuth bo'lsa yoki tokenni sarlavhada kutsa)
 			const token = jwt.sign(
 				{ id: user._id, role: user.role },
-				process.env.NEXT_PUBLIC_JWT_SECRET || 'fallback_secret',
+				process.env.JWT_SECRET || 'fallback_secret',
 				{ expiresIn: '30d' },
 			)
 
@@ -114,7 +114,7 @@ class AuthController {
 
 			const token = jwt.sign(
 				{ id: user._id, role: user.role },
-				process.env.NEXT_PUBLIC_JWT_SECRET || 'fallback_secret',
+				process.env.JWT_SECRET || 'fallback_secret',
 				{ expiresIn: '30d' },
 			)
 

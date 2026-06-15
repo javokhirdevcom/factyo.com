@@ -44,23 +44,23 @@ export default function InvoiceDetailPage() {
 	const [duplicating, setDuplicating] = useState(false)
 
 	const user = (session as any)?.currentUser
+	const userId: string | undefined = user?._id ?? session?.user?.id
 
 	useEffect(() => {
 		const load = async () => {
-			const userId = user?._id
-			if (!userId || !id) return
+			if (!userId || !id) { setLoading(false); return }
 			const res = await getInvoiceAction({ userId, invoiceId: id })
 			if (res?.data?.invoice) setInvoice(res.data.invoice)
 			setLoading(false)
 		}
-		if (user) load()
-	}, [user, id])
+		load()
+	}, [userId, id])
 
 	const handleSendConfirmed = async () => {
 		if (!invoice) return
 		setSending(true)
 		setShowSendPreview(false)
-		const res = await sendInvoiceAction({ userId: user._id, invoiceId: invoice._id })
+		const res = await sendInvoiceAction({ userId: userId!, invoiceId: invoice._id })
 		if (res?.data?.success) {
 			toast.success(t('invoices.sentSuccess'))
 			setInvoice(prev => prev ? { ...prev, status: 'sent' } : prev)
@@ -73,7 +73,7 @@ export default function InvoiceDetailPage() {
 	const handleMarkPaid = async () => {
 		if (!invoice) return
 		setMarkingPaid(true)
-		const res = await updateInvoiceStatusAction({ userId: user._id, invoiceId: invoice._id, status: 'paid' })
+		const res = await updateInvoiceStatusAction({ userId: userId!, invoiceId: invoice._id, status: 'paid' })
 		if (res?.data?.success) {
 			toast.success(t('invoices.markedPaid'))
 			setInvoice(prev => prev ? { ...prev, status: 'paid' } : prev)
@@ -87,7 +87,7 @@ export default function InvoiceDetailPage() {
 		if (!invoice) return
 		setDeleting(true)
 		try {
-			const res = await deleteInvoiceAction({ userId: user._id, invoiceId: invoice._id })
+			const res = await deleteInvoiceAction({ userId: userId!, invoiceId: invoice._id })
 			if (res?.data?.success) {
 				toast.success(t('invoices.deleted'))
 				router.push('/dashboard/invoices')
@@ -114,7 +114,7 @@ export default function InvoiceDetailPage() {
 			const newNumber = `${year}-${String(((user?.invoiceSequence ?? 0) + 1)).padStart(4, '0')}`
 
 			const res = await createInvoiceAction({
-				userId: user._id,
+				userId: userId!,
 				clientId,
 				invoiceNumber: newNumber,
 				date: today,

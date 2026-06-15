@@ -82,7 +82,7 @@ function EditableField({ client, field, placeholder, editing, setEditing, commit
 
 export default function ClientsPage() {
 	const { t } = useLanguage()
-	const { data: session } = useSession()
+	const { data: session, status } = useSession()
 	const [clients, setClients] = useState<IClient[]>([])
 	const [loading, setLoading] = useState(true)
 	const [showForm, setShowForm] = useState(false)
@@ -93,6 +93,7 @@ export default function ClientsPage() {
 	const [savingEdit, setSavingEdit] = useState(false)
 
 	const user = (session as any)?.currentUser
+	const userId: string | undefined = user?._id ?? session?.user?.id
 
 	const form = useForm<FormValues, unknown, FormValues>({
 		resolver: zodResolver(clientSchema) as any,
@@ -102,21 +103,23 @@ export default function ClientsPage() {
 	const watchIsCompany = form.watch('isCompany')
 
 	const load = async () => {
-		const userId = user?._id
-		if (!userId) return
+		if (!userId) { setLoading(false); return }
+		setLoading(true)
 		const res = await getClientsAction({ userId })
 		if (res?.data?.clients) setClients(res.data.clients)
 		setLoading(false)
 	}
 
 	useEffect(() => {
-		if (user) load()
+		if (status === 'loading') return
+		load()
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user])
+	}, [userId, status])
 
 	async function onSubmit(values: FormValues) {
+		if (!userId) return
 		setSaving(true)
-		const res = await createClientAction({ userId: user._id, ...values })
+		const res = await createClientAction({ userId, ...values })
 		if (res?.data?.client) {
 			toast.success(t('clients.added'))
 			setClients(prev => [res.data!.client!, ...prev])
@@ -129,8 +132,9 @@ export default function ClientsPage() {
 	}
 
 	const handleDelete = async (id: string) => {
+		if (!userId) return
 		setDeleting(id)
-		const res = await deleteClientAction({ userId: user._id, clientId: id })
+		const res = await deleteClientAction({ userId, clientId: id })
 		if (res?.data?.success) {
 			toast.success(t('clients.removed'))
 			setClients(prev => prev.filter(c => c._id !== id))
@@ -149,7 +153,7 @@ export default function ClientsPage() {
 
 		const updated = { ...client, [editing.field]: editing.value }
 		const res = await updateClientAction({
-			userId: user._id,
+			userId: userId!,
 			clientId: client._id,
 			name: updated.name,
 			email: updated.email,

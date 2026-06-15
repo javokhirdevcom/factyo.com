@@ -21,11 +21,11 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
-      - key: MAIL_HOST
+      - key: SMTP_HOST
         sync: false
-      - key: MAIL_PORT
+      - key: SMTP_PORT
         sync: false
-      - key: MAIL_USER
+      - key: SMTP_USER
         sync: false
-      - key: MAIL_PASS
+      - key: SMTP_PASS
         sync: false
