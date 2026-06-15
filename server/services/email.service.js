@@ -3,7 +3,11 @@ const { generateInvoicePdf } = require('./pdf.service')
 
 const fmt = amount => `€${Number(amount).toFixed(2)}`
 const fmtDate = d =>
-	new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+	new Date(d).toLocaleDateString('en-GB', {
+		day: '2-digit',
+		month: 'long',
+		year: 'numeric',
+	})
 
 const sendInvoiceEmail = async ({ invoice, client, user }) => {
 	const pdfBuffer = await generateInvoicePdf({ invoice, client, user })
@@ -53,13 +57,17 @@ const sendInvoiceEmail = async ({ invoice, client, user }) => {
       ${invoice.vatRate === 0 ? `<p style="font-size:13px;color:#2563eb;margin:0 0 20px;">VAT reverse-charged</p>` : ''}
 
       <!-- Payment details -->
-      ${user.iban ? `
+      ${
+				user.iban
+					? `
       <div style="background:#f9fafb;border-radius:6px;padding:14px 16px;margin-bottom:20px;">
         <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-weight:600;">Payment details</p>
         <p style="margin:0 0 4px;font-size:13px;color:#374151;"><span style="color:#9ca3af;display:inline-block;width:38px;">IBAN</span>${user.iban}</p>
         ${user.bic ? `<p style="margin:0 0 4px;font-size:13px;color:#374151;"><span style="color:#9ca3af;display:inline-block;width:38px;">BIC</span>${user.bic}</p>` : ''}
         <p style="margin:0;font-size:13px;color:#374151;"><span style="color:#9ca3af;display:inline-block;width:38px;">Name</span>${user.fullName}</p>
-      </div>` : ''}
+      </div>`
+					: ''
+			}
 
       <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
         We kindly ask you to pay ${fmt(invoice.total)} before ${fmtDate(invoice.dueDate)}, citing payment reference <strong>${invoice.invoiceNumber}</strong>.
@@ -78,11 +86,14 @@ const sendInvoiceEmail = async ({ invoice, client, user }) => {
 
 	const transporter = nodemailer.createTransport({
 		host: process.env.SMTP_HOST,
-		port: parseInt(process.env.SMTP_PORT || '587', 10),
-		secure: false,
+		port: parseInt(process.env.SMTP_PORT || '465', 10),
+		secure: true,
 		auth: {
 			user: process.env.SMTP_USER,
 			pass: process.env.SMTP_PASS,
+		},
+		tls: {
+			rejectUnauthorized: false,
 		},
 	})
 
