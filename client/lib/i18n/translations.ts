@@ -33,6 +33,7 @@ const en: DeepRecord = {
     signOut: 'Sign out',
     newInvoice: 'New Invoice',
     upgrade: 'Upgrade',
+    admin: 'Admin Panel',
   },
   auth: {
     login: {

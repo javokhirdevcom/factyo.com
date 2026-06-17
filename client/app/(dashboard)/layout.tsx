@@ -14,6 +14,7 @@ import {
 	LogOut,
 	Menu,
 	Plus,
+	Shield,
 } from 'lucide-react'
 import { ChildProps } from '@/types'
 import { useLanguage } from '@/lib/i18n/LanguageProvider'
@@ -44,11 +45,14 @@ export default function DashboardLayout({ children }: ChildProps) {
 	const planLabel = plan === 'free' ? t('settings.planFree') : plan === 'basic' ? t('settings.planBasic') : t('settings.planUnlimited')
 	const planColor = plan === 'free' ? '#9ca3af' : plan === 'basic' ? '#60a5fa' : '#FF2D78'
 
+	const isAdmin = user?.role === 'admin' || (session?.user as any)?.role === 'admin'
+
 	const navItems = [
 		{ labelKey: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard },
 		{ labelKey: 'nav.invoices', href: '/dashboard/invoices', icon: FileText },
 		{ labelKey: 'nav.clients', href: '/dashboard/clients', icon: Users },
 		{ labelKey: 'nav.settings', href: '/dashboard/settings', icon: Settings },
+		...(isAdmin ? [{ labelKey: 'nav.admin', href: '/admin', icon: Shield }] : []),
 	]
 
 	const SidebarContent = () => (

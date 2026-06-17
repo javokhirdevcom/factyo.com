@@ -54,10 +54,18 @@ export default function LoginPage() {
 			}
 
 			if (res.data.failure === 'Please verify your email before logging in.') {
-				// Auto-send OTP and switch to verify step
 				const otpRes = await sendOtpEmail({ email: values.email })
 				if (otpRes?.serverError) {
 					toast.error('Failed to send verification code. Please try again.')
+					return
+				}
+				// OTP disabled by admin — auto-verified, sign in directly
+				if ((otpRes?.data as any)?.skipOtp) {
+					await signIn('credentials', {
+						userId: String(res.data.userId ?? ''),
+						callbackUrl: '/dashboard',
+						redirect: true,
+					})
 					return
 				}
 				setRegisteredEmail(values.email)

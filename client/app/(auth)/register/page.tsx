@@ -55,10 +55,16 @@ export default function RegisterPage() {
 				return
 			}
 
-			// Account created — send OTP
+			// Account created — send OTP (or auto-verify if OTP is disabled by admin)
 			const otpRes = await sendOtpEmail({ email: values.email })
 			if (otpRes?.serverError || otpRes?.data?.failure) {
 				toast.error(otpRes?.serverError || otpRes?.data?.failure || t('common.error'))
+				return
+			}
+
+			if ((otpRes?.data as any)?.skipOtp) {
+				toast.success('Account created and verified! Please log in.')
+				router.push('/login')
 				return
 			}
 

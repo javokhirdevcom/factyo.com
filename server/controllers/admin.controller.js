@@ -1,128 +1,140 @@
-const productModel = require('../models/product.model')
-const userModel = require('../models/user.model')
-const orderModel = require('../models/order.model')
-const transactionModel = require('../models/transaction.model')
+const User = require('../models/user.model')
+const Invoice = require('../models/invoice.model')
+const SystemConfig = require('../models/system-config.model')
 
 class AdminController {
-	// [GET] /admin/products
-	async getProducts(req, res, next) {
+	async getStats(req, res, next) {
 		try {
-			const products = await productModel.find()
-			return res.json({ success: 'Products retrieved successfully', products })
-		} catch (error) {
-			next(error)
-		}
-	}
+			const [totalUsers, verifiedUsers, unverifiedUsers, totalInvoices, paidInvoices, basicUsers, unlimitedUsers] =
+				await Promise.all([
+					User.countDocuments({ isDeleted: false }),
+					User.countDocuments({ isDeleted: false, isVerified: true }),
+					User.countDocuments({ isDeleted: false, isVerified: false }),
+					Invoice.countDocuments({}),
+					Invoice.countDocuments({ status: 'paid' }),
+					User.countDocuments({ plan: 'basic', isDeleted: false }),
+					User.countDocuments({ plan: 'unlimited', isDeleted: false }),
+				])
 
-	// [GET] /admin/customers
-	async getCustomers(req, res, next) {
-		try {
-			const customers = await userModel.find({ role: 'user' })
+			const revenueAgg = await Invoice.aggregate([
+				{ $match: { status: 'paid' } },
+				{ $group: { _id: null, total: { $sum: '$total' } } },
+			])
+
+			const recentUsers = await User.find({ isDeleted: false })
+				.select('-password')
+				.sort({ createdAt: -1 })
+				.limit(5)
+
 			return res.json({
-				success: 'Customers retrieved successfully',
-				customers,
+				success: true,
+				stats: {
+					totalUsers,
+					verifiedUsers,
+					unverifiedUsers,
+					totalInvoices,
+					paidInvoices,
+					basicUsers,
+					unlimitedUsers,
+					totalRevenue: revenueAgg[0]?.total ?? 0,
+				},
+				recentUsers,
 			})
-		} catch (error) {
-			next(error)
+		} catch (err) {
+			next(err)
 		}
 	}
 
-	// [GET] /admin/orders
-	async getOrders(req, res, next) {
+	async getUsers(req, res, next) {
 		try {
-			const orders = await orderModel.find()
-			return res.json({ success: 'Orders retrieved successfully', orders })
-		} catch (error) {
-			next(error)
-		}
-	}
-
-	// [GET] /admin/transactions
-	async getTransactions(req, res, next) {
-		try {
-			const transactions = await transactionModel.find()
-			return res.json({
-				success: 'Transactions retrieved successfully',
-				transactions,
-			})
-		} catch (error) {
-			next(error)
-		}
-	}
-
-	// [POST] /admin/create-product
-	async createProduct(req, res, next) {
-		try {
-			const newProduct = await productModel.create(req.body)
-			if (!newProduct) {
-				return res.json({ failure: 'Failed to create product' })
+			const { search = '', page = 1, limit = 50 } = req.query
+			const query = { isDeleted: false }
+			if (search) {
+				query.$or = [
+					{ email: { $regex: search, $options: 'i' } },
+					{ fullName: { $regex: search, $options: 'i' } },
+				]
 			}
-			return res.json({
-				success: 'Product created successfully',
-				product: newProduct,
-			})
-		} catch (error) {
-			next(error)
+
+			const [users, total] = await Promise.all([
+				User.find(query)
+					.select('-password')
+					.sort({ createdAt: -1 })
+					.skip((page - 1) * limit)
+					.limit(Number(limit)),
+				User.countDocuments(query),
+			])
+
+			return res.json({ success: true, users, total })
+		} catch (err) {
+			next(err)
 		}
 	}
 
-	// [PUT] /admin/update-product/:id
-	async updateProduct(req, res, next) {
+	async verifyUser(req, res, next) {
 		try {
 			const { id } = req.params
-			const updatedProduct = await productModel.findByIdAndUpdate(
-				id,
-				req.body,
-				{ returnDocument: 'after' }, // Mongoose deprecation xatosini oldini olish uchun
-			)
-			if (!updatedProduct) {
-				return res.json({ failure: 'Failed to update product' })
-			}
-			return res.json({
-				success: 'Product updated successfully',
-				product: updatedProduct,
-			})
-		} catch (error) {
-			next(error)
+			const user = await User.findByIdAndUpdate(id, { isVerified: true }, { new: true }).select('-password')
+			if (!user) return res.json({ failure: 'User not found' })
+			return res.json({ success: true, user })
+		} catch (err) {
+			next(err)
 		}
 	}
 
-	// [PUT] /admin/update-order/:id
-	async updateOrder(req, res, next) {
+	async unverifyUser(req, res, next) {
 		try {
 			const { id } = req.params
-			const { status } = req.body
-			const updatedOrder = await orderModel.findByIdAndUpdate(
-				id,
-				{ status },
-				{ returnDocument: 'after' },
-			)
-			if (!updatedOrder) {
-				return res.json({ failure: 'Failed to update order' })
-			}
-			return res.json({
-				success: 'Order updated successfully',
-				order: updatedOrder,
-			})
-		} catch (error) {
-			next(error)
+			const user = await User.findByIdAndUpdate(id, { isVerified: false }, { new: true }).select('-password')
+			if (!user) return res.json({ failure: 'User not found' })
+			return res.json({ success: true, user })
+		} catch (err) {
+			next(err)
 		}
 	}
 
-	// [DELETE] /admin/delete-product/:id
-	async deleteProduct(req, res, next) {
+	async updateUserRole(req, res, next) {
 		try {
 			const { id } = req.params
-			const deletedProduct = await productModel.findByIdAndDelete(id)
-			if (!deletedProduct) {
-				return res.json({ failure: 'Failed to delete product' })
+			const { role } = req.body
+			if (!['user', 'admin'].includes(role)) return res.json({ failure: 'Invalid role' })
+			const user = await User.findByIdAndUpdate(id, { role }, { new: true }).select('-password')
+			if (!user) return res.json({ failure: 'User not found' })
+			return res.json({ success: true, user })
+		} catch (err) {
+			next(err)
+		}
+	}
+
+	async deleteUser(req, res, next) {
+		try {
+			const { id } = req.params
+			await User.findByIdAndUpdate(id, { isDeleted: true, deletedAt: new Date() })
+			return res.json({ success: true })
+		} catch (err) {
+			next(err)
+		}
+	}
+
+	async getSettings(req, res, next) {
+		try {
+			const config = await SystemConfig.getConfig()
+			return res.json({ success: true, settings: config })
+		} catch (err) {
+			next(err)
+		}
+	}
+
+	async updateSettings(req, res, next) {
+		try {
+			const { otpEnabled } = req.body
+			if (typeof otpEnabled === 'boolean') {
+				await SystemConfig.setValue('otpEnabled', otpEnabled)
 			}
-			return res.json({
-				success: 'Product deleted successfully',
-				product: deletedProduct,
-			})
-		} catch (error) {
-			next(error)
+			const config = await SystemConfig.getConfig()
+			return res.json({ success: true, settings: config })
+		} catch (err) {
+			next(err)
 		}
 	}
 }
