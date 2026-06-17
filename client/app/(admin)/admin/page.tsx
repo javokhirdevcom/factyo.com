@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { getAdminStatsAction } from '@/actions/admin.action'
+import { toast } from 'sonner'
 import { Users, FileText, TrendingUp, CheckCircle, XCircle, CreditCard, Shield } from 'lucide-react'
 
 const fmt = (n: number) =>
@@ -24,6 +25,10 @@ export default function AdminPage() {
 			if (res?.data?.stats) {
 				setStats(res.data.stats)
 				setRecentUsers(res.data.recentUsers ?? [])
+			} else if (res?.data?.failure) {
+				toast.error('Access denied: ' + res.data.failure)
+			} else if (res?.serverError) {
+				toast.error('Server error: ' + res.serverError)
 			}
 			setLoading(false)
 		}

@@ -20,6 +20,10 @@ export default function AdminSettingsPage() {
 			const res = await getAdminSettingsAction({ userId: adminId })
 			if (res?.data?.settings) {
 				setOtpEnabled(res.data.settings.otpEnabled !== false)
+			} else if (res?.data?.failure) {
+				toast.error('Access denied: ' + res.data.failure)
+			} else if (res?.serverError) {
+				toast.error('Server error: ' + res.serverError)
 			}
 			setLoading(false)
 		}

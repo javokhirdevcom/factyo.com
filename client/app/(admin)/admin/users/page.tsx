@@ -30,12 +30,18 @@ export default function AdminUsersPage() {
 	const adminId: string = (session as any)?.currentUser?._id ?? session?.user?.id ?? ''
 
 	const load = async (q = search) => {
-		if (!adminId) return
+		if (!adminId) { setLoading(false); return }
 		setLoading(true)
 		const res = await getAdminUsersAction({ userId: adminId, search: q })
-		if (res?.data?.users) {
+		if (res?.serverError) {
+			toast.error('Server error: ' + res.serverError)
+		} else if (res?.data?.failure) {
+			toast.error('Access denied: ' + res.data.failure)
+		} else if (res?.data?.users) {
 			setUsers(res.data.users)
 			setTotal(res.data.total ?? res.data.users.length)
+		} else {
+			toast.error('Unexpected response — backend may not be deployed yet.')
 		}
 		setLoading(false)
 	}
