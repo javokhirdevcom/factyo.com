@@ -66,6 +66,7 @@ class StripeController {
 		}
 	}
 
+	// Cancel at end of current billing period — user keeps access until then
 	async cancelSubscription(req, res, next) {
 		try {
 			const userId = req.headers['x-user-id']
@@ -74,10 +75,37 @@ class StripeController {
 			const user = await User.findById(userId)
 			if (!user?.subscriptionId) return res.json({ failure: 'No active subscription found.' })
 
-			await stripe.subscriptions.cancel(user.subscriptionId)
+			const updated = await stripe.subscriptions.update(user.subscriptionId, {
+				cancel_at_period_end: true,
+			})
 
-			user.plan = 'free'
-			user.subscriptionId = ''
+			user.subscriptionStatus = 'cancelling'
+			user.subscriptionCurrentPeriodEnd = new Date(updated.current_period_end * 1000)
+			await user.save()
+
+			return res.json({
+				success: true,
+				endsAt: user.subscriptionCurrentPeriodEnd,
+			})
+		} catch (err) {
+			next(err)
+		}
+	}
+
+	// Undo a pending cancellation — resumes subscription normally
+	async reactivateSubscription(req, res, next) {
+		try {
+			const userId = req.headers['x-user-id']
+			if (!userId) return res.status(401).json({ failure: 'Unauthorized' })
+
+			const user = await User.findById(userId)
+			if (!user?.subscriptionId) return res.json({ failure: 'No subscription found.' })
+
+			await stripe.subscriptions.update(user.subscriptionId, {
+				cancel_at_period_end: false,
+			})
+
+			user.subscriptionStatus = 'active'
 			await user.save()
 
 			return res.json({ success: true })
@@ -91,35 +119,115 @@ class StripeController {
 		let event
 
 		try {
-			event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET)
+			event = stripe.webhooks.constructEvent(
+				req.body,
+				sig,
+				process.env.STRIPE_WEBHOOK_SECRET,
+			)
 		} catch (err) {
+			console.error('[webhook] Signature verification failed:', err.message)
 			return res.status(400).json({ failure: `Webhook error: ${err.message}` })
 		}
 
 		try {
-			if (event.type === 'checkout.session.completed') {
-				const session = event.data.object
-				const userId = session.metadata?.userId
-				const plan = session.metadata?.plan
-				if (userId && plan) {
+			switch (event.type) {
+				// --- New subscription created via Stripe Checkout ---
+				case 'checkout.session.completed': {
+					const session = event.data.object
+					const userId = session.metadata?.userId
+					const plan = session.metadata?.plan
+					if (!userId || !plan) break
+
+					// Fetch the subscription to get period end
+					const sub = await stripe.subscriptions.retrieve(session.subscription)
+
 					await User.findByIdAndUpdate(userId, {
 						plan,
-						subscriptionId: session.subscription || '',
-						customerId: session.customer || '',
+						subscriptionId: sub.id,
+						customerId: session.customer,
+						subscriptionStatus: 'active',
+						subscriptionCurrentPeriodEnd: new Date(sub.current_period_end * 1000),
 					})
+					console.log(`[webhook] checkout.session.completed userId=${userId} plan=${plan}`)
+					break
 				}
-			}
 
-			if (event.type === 'customer.subscription.deleted') {
-				const sub = event.data.object
-				await User.findOneAndUpdate(
-					{ subscriptionId: sub.id },
-					{ plan: 'free', subscriptionId: '' }
-				)
+				// --- Subscription updated (cancel_at_period_end, status change, renewal) ---
+				case 'customer.subscription.updated': {
+					const sub = event.data.object
+					const user = await User.findOne({ subscriptionId: sub.id })
+					if (!user) break
+
+					const periodEnd = new Date(sub.current_period_end * 1000)
+
+					if (sub.status === 'past_due') {
+						user.subscriptionStatus = 'past_due'
+					} else if (sub.cancel_at_period_end) {
+						user.subscriptionStatus = 'cancelling'
+					} else if (sub.status === 'active') {
+						user.subscriptionStatus = 'active'
+					}
+
+					user.subscriptionCurrentPeriodEnd = periodEnd
+					await user.save()
+					console.log(`[webhook] subscription.updated id=${sub.id} status=${user.subscriptionStatus}`)
+					break
+				}
+
+				// --- Subscription fully deleted (period ended or immediate cancel) ---
+				case 'customer.subscription.deleted': {
+					const sub = event.data.object
+					await User.findOneAndUpdate(
+						{ subscriptionId: sub.id },
+						{
+							plan: 'free',
+							subscriptionId: '',
+							subscriptionStatus: '',
+							subscriptionCurrentPeriodEnd: null,
+						},
+					)
+					console.log(`[webhook] subscription.deleted id=${sub.id}`)
+					break
+				}
+
+				// --- Recurring payment succeeded → renew period end date ---
+				case 'invoice.paid': {
+					const invoice = event.data.object
+					// Only act on subscription renewal invoices
+					if (invoice.billing_reason !== 'subscription_cycle') break
+
+					const user = await User.findOne({ customerId: invoice.customer })
+					if (!user?.subscriptionId) break
+
+					const sub = await stripe.subscriptions.retrieve(user.subscriptionId)
+					user.subscriptionCurrentPeriodEnd = new Date(sub.current_period_end * 1000)
+					// Keep 'cancelling' status if user already requested cancel
+					if (user.subscriptionStatus !== 'cancelling') {
+						user.subscriptionStatus = 'active'
+					}
+					await user.save()
+					console.log(`[webhook] invoice.paid renewal customerId=${invoice.customer}`)
+					break
+				}
+
+				// --- Recurring payment failed → warn user ---
+				case 'invoice.payment_failed': {
+					const invoice = event.data.object
+					await User.findOneAndUpdate(
+						{ customerId: invoice.customer },
+						{ subscriptionStatus: 'past_due' },
+					)
+					console.log(`[webhook] invoice.payment_failed customerId=${invoice.customer}`)
+					break
+				}
+
+				default:
+					break
 			}
 
 			return res.json({ received: true })
 		} catch (err) {
+			console.error('[webhook] Handler error:', err.message)
 			return res.status(500).json({ failure: 'Webhook handler error.' })
 		}
 	}

@@ -25,6 +25,12 @@ const userSchema = new Schema(
 		invoiceCount: { type: Number, default: 0 },
 		customerId: { type: String, default: '' },
 		subscriptionId: { type: String, default: '' },
+		subscriptionStatus: {
+			type: String,
+			enum: ['active', 'cancelling', 'past_due', ''],
+			default: '',
+		},
+		subscriptionCurrentPeriodEnd: { type: Date, default: null },
 
 		isVerified: { type: Boolean, default: false },
 		isDeleted: { type: Boolean, default: false },

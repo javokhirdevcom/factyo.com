@@ -36,3 +36,14 @@ export const cancelSubscriptionAction = actionClient
 		)
 		return JSON.parse(JSON.stringify(data))
 	})
+
+export const reactivateSubscriptionAction = actionClient
+	.schema(z.object({ userId: z.string() }))
+	.action(async ({ parsedInput }) => {
+		const { data } = await axiosClient.post(
+			'/api/stripe/reactivate',
+			{},
+			{ headers: { 'x-user-id': parsedInput.userId } }
+		)
+		return JSON.parse(JSON.stringify(data))
+	})

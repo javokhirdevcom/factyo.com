@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import Image from 'next/image'
 import { updateProfileAction, updateLogoAction } from '@/actions/auth.action'
-import { cancelSubscriptionAction } from '@/actions/stripe.action'
+import { cancelSubscriptionAction, reactivateSubscriptionAction, getBillingPortalAction } from '@/actions/stripe.action'
 import { profileSchema } from '@/lib/validation'
 import { useLanguage } from '@/lib/i18n/LanguageProvider'
 import { LANG_LABELS, Lang } from '@/lib/i18n/translations'
@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Building2, CreditCard, ArrowRight, Globe, Upload, User, X } from 'lucide-react'
+import { Building2, CreditCard, ArrowRight, Globe, Upload, User, X, AlertTriangle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useUploadThing } from '@/lib/uploadthing'
 
@@ -29,9 +29,14 @@ export default function SettingsPage() {
 	const [saving, setSaving] = useState(false)
 	const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
 	const [cancelling, setCancelling] = useState(false)
+	const [reactivating, setReactivating] = useState(false)
 	const [logoUploading, setLogoUploading] = useState(false)
 	const user = (session as any)?.currentUser
 	const userId: string | undefined = user?._id ?? session?.user?.id
+	const subStatus: string = user?.subscriptionStatus ?? ''
+	const subEndsAt: Date | null = user?.subscriptionCurrentPeriodEnd
+		? new Date(user.subscriptionCurrentPeriodEnd)
+		: null
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(profileSchema),
@@ -91,6 +96,18 @@ export default function SettingsPage() {
 			toast.error(res?.data?.failure || t('common.error'))
 		}
 		setCancelling(false)
+	}
+
+	const handleReactivate = async () => {
+		setReactivating(true)
+		const res = await reactivateSubscriptionAction({ userId: userId! })
+		if (res?.data?.success) {
+			toast.success('Subscription reactivated.')
+			await update()
+		} else {
+			toast.error(res?.data?.failure || t('common.error'))
+		}
+		setReactivating(false)
 	}
 
 	const plan = user?.plan ?? 'free'
@@ -196,10 +213,43 @@ export default function SettingsPage() {
 			</div>
 
 			{/* Current plan */}
-			<div className='bg-white rounded-2xl border border-gray-100 shadow-sm p-6'>
-				<h2 className='font-bold text-gray-900 mb-4 flex items-center gap-2'>
+			<div className='bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4'>
+				<h2 className='font-bold text-gray-900 flex items-center gap-2'>
 					<CreditCard className='w-4 h-4 text-gray-400' /> {t('settings.subscription')}
 				</h2>
+
+				{/* Past-due warning */}
+				{subStatus === 'past_due' && (
+					<div className='flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200'>
+						<AlertTriangle className='w-4 h-4 text-amber-500 shrink-0 mt-0.5' />
+						<div>
+							<p className='text-sm font-semibold text-amber-800'>Payment failed</p>
+							<p className='text-xs text-amber-600 mt-0.5'>
+								Your last payment could not be processed. Please update your payment method to keep access.
+							</p>
+						</div>
+					</div>
+				)}
+
+				{/* Cancelling notice */}
+				{subStatus === 'cancelling' && subEndsAt && (
+					<div className='flex items-start gap-3 p-3 rounded-xl bg-orange-50 border border-orange-200'>
+						<AlertTriangle className='w-4 h-4 text-orange-500 shrink-0 mt-0.5' />
+						<div className='flex-1'>
+							<p className='text-sm font-semibold text-orange-800'>Subscription cancels on {subEndsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+							<p className='text-xs text-orange-600 mt-0.5'>You still have full access until then.</p>
+						</div>
+						<button
+							onClick={handleReactivate}
+							disabled={reactivating}
+							className='shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors disabled:opacity-60'
+						>
+							<RefreshCw className='w-3 h-3' />
+							{reactivating ? 'Reactivating…' : 'Reactivate'}
+						</button>
+					</div>
+				)}
+
 				<div className='flex items-center justify-between'>
 					<div>
 						<span className='text-sm font-semibold rounded-full px-3 py-1 border' style={{ color: planColor, borderColor: planColor, background: `${planColor}18` }}>
@@ -212,7 +262,7 @@ export default function SettingsPage() {
 						</p>
 					</div>
 					<div className='flex gap-2'>
-						{plan !== 'free' && (
+						{plan !== 'free' && subStatus !== 'cancelling' && (
 							<button
 								onClick={() => setCancelConfirmOpen(true)}
 								className='px-3 py-2 rounded-xl text-xs font-semibold text-red-500 border border-red-100 hover:bg-red-50 transition-colors'
@@ -220,12 +270,13 @@ export default function SettingsPage() {
 								{t('settings.cancelSubscription')}
 							</button>
 						)}
-						{plan !== 'unlimited' && (
+						{(plan !== 'unlimited' || subStatus === 'past_due') && subStatus !== 'cancelling' && (
 							<Link
-								href='/pricing'
+								href={subStatus === 'past_due' ? '#' : '/pricing'}
+								onClick={subStatus === 'past_due' ? async (e) => { e.preventDefault(); const res = await getBillingPortalAction({ userId: userId! }); if (res?.data?.url) window.location.href = res.data.url } : undefined}
 								className='inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white factyo-gradient hover:opacity-90 transition-opacity'
 							>
-								{t('settings.upgrade')} <ArrowRight className='w-4 h-4' />
+								{subStatus === 'past_due' ? 'Update payment' : t('settings.upgrade')} <ArrowRight className='w-4 h-4' />
 							</Link>
 						)}
 					</div>

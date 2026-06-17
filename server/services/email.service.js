@@ -1,5 +1,7 @@
-const nodemailer = require('nodemailer')
+const resend = require('../lib/resend')
 const { generateInvoicePdf } = require('./pdf.service')
+
+const FROM = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
 const fmt = amount => `€${Number(amount).toFixed(2)}`
 const fmtDate = d =>
@@ -84,22 +86,8 @@ const sendInvoiceEmail = async ({ invoice, client, user }) => {
 </body>
 </html>`
 
-	const smtpPort = parseInt(process.env.SMTP_PORT || '465', 10)
-	const transporter = nodemailer.createTransport({
-		host: process.env.SMTP_HOST,
-		port: smtpPort,
-		secure: smtpPort === 465,
-		auth: {
-			user: process.env.SMTP_USER,
-			pass: (process.env.SMTP_PASS || '').replace(/\s/g, ''),
-		},
-		tls: {
-			rejectUnauthorized: false,
-		},
-	})
-
-	await transporter.sendMail({
-		from: `"${senderName}" <${process.env.SMTP_USER}>`,
+	const { error } = await resend.emails.send({
+		from: `${senderName} via Factyo <${FROM}>`,
 		to: client.email,
 		subject: `Invoice ${invoice.invoiceNumber} from ${senderName}`,
 		html,
@@ -107,10 +95,11 @@ const sendInvoiceEmail = async ({ invoice, client, user }) => {
 			{
 				filename: `Invoice-${invoice.invoiceNumber}.pdf`,
 				content: pdfBuffer,
-				contentType: 'application/pdf',
 			},
 		],
 	})
+
+	if (error) throw new Error(`Resend invoice error: ${error.message}`)
 }
 
 module.exports = { sendInvoiceEmail }

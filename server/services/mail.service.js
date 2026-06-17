@@ -1,22 +1,10 @@
-const nodemailer = require('nodemailer')
+const resend = require('../lib/resend')
 const bcrypt = require('bcrypt')
 const otpModel = require('../models/otp.model')
 
-class MailService {
-	getTransporter() {
-		const port = parseInt(process.env.SMTP_PORT || '465', 10)
-		return nodemailer.createTransport({
-			host: process.env.SMTP_HOST,
-			port,
-			secure: port === 465,
-			auth: {
-				user: process.env.SMTP_USER,
-				pass: (process.env.SMTP_PASS || '').replace(/\s/g, ''),
-			},
-			tls: { rejectUnauthorized: false },
-		})
-	}
+const FROM = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
+class MailService {
 	async sendOtpMail(email) {
 		const code = Math.floor(100000 + Math.random() * 900000).toString()
 		const hashedOtp = await bcrypt.hash(code, 10)
@@ -25,12 +13,11 @@ class MailService {
 		await otpModel.create({
 			email,
 			otp: hashedOtp,
-			expireAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+			expireAt: new Date(Date.now() + 10 * 60 * 1000),
 		})
 
-		const transporter = this.getTransporter()
-		await transporter.sendMail({
-			from: `"Factyo" <${process.env.SMTP_USER}>`,
+		const { error } = await resend.emails.send({
+			from: `Factyo <${FROM}>`,
 			to: email,
 			subject: 'Your Factyo verification code',
 			html: `<!DOCTYPE html>
@@ -56,6 +43,8 @@ class MailService {
 </body>
 </html>`,
 		})
+
+		if (error) throw new Error(`Resend OTP error: ${error.message}`)
 	}
 
 	async verifyOtp(email, otp) {
