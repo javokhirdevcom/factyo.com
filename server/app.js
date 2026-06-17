@@ -11,8 +11,9 @@ const app = express()
 // CORS sozlamalarini production uchun kuchaytiramiz
 const allowedOrigins = [
 	process.env.CLIENT_URL,
+	'https://www.factyo.com',
 	'https://factyo.com',
-	'http://localhost:3000', // Mahalliy frontend uchun
+	'http://localhost:3000',
 ].filter(Boolean)
 
 app.use(

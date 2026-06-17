@@ -6,6 +6,8 @@ const PLAN_PRICE_IDS = {
 	unlimited: process.env.FACTYO_UNLIMITED_PLAN_ID,
 }
 
+const CLIENT_URL = process.env.CLIENT_URL || 'https://www.factyo.com'
+
 class StripeController {
 	async createCheckout(req, res, next) {
 		try {
@@ -36,14 +38,15 @@ class StripeController {
 				payment_method_types: ['card'],
 				line_items: [{ price: priceId, quantity: 1 }],
 				mode: 'subscription',
-				success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-				cancel_url: `${process.env.CLIENT_URL}/pricing`,
+				success_url: `${CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${CLIENT_URL}/pricing`,
 				metadata: { userId: String(user._id), plan },
 			})
 
 			return res.json({ success: true, url: session.url })
 		} catch (err) {
-			next(err)
+			console.error('[stripe] createCheckout error:', err.message)
+			return res.json({ failure: err.message || 'Failed to create checkout session.' })
 		}
 	}
 
@@ -57,12 +60,13 @@ class StripeController {
 
 			const session = await stripe.billingPortal.sessions.create({
 				customer: user.customerId,
-				return_url: `${process.env.CLIENT_URL}/dashboard/settings`,
+				return_url: `${CLIENT_URL}/dashboard/settings`,
 			})
 
 			return res.json({ success: true, url: session.url })
 		} catch (err) {
-			next(err)
+			console.error('[stripe] getPortal error:', err.message)
+			return res.json({ failure: err.message || 'Failed to open billing portal.' })
 		}
 	}
 
@@ -88,7 +92,8 @@ class StripeController {
 				endsAt: user.subscriptionCurrentPeriodEnd,
 			})
 		} catch (err) {
-			next(err)
+			console.error('[stripe] cancelSubscription error:', err.message)
+			return res.json({ failure: err.message || 'Failed to cancel subscription.' })
 		}
 	}
 
@@ -110,7 +115,8 @@ class StripeController {
 
 			return res.json({ success: true })
 		} catch (err) {
-			next(err)
+			console.error('[stripe] reactivateSubscription error:', err.message)
+			return res.json({ failure: err.message || 'Failed to reactivate subscription.' })
 		}
 	}
 

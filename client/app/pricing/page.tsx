@@ -82,11 +82,22 @@ export default function PricingPage() {
 		}
 		setLoading(planKey)
 		const userId = (session as any).currentUser?._id || session.user?.id
+		if (!userId) {
+			toast.error('Session expired — please log out and log in again.')
+			setLoading(null)
+			return
+		}
 		const res = await createCheckoutSessionAction({ userId, plan: planKey })
 		if (res?.data?.success && res.data.url) {
 			window.location.href = res.data.url
+		} else if (res?.data?.failure) {
+			toast.error(res.data.failure)
+			setLoading(null)
+		} else if (res?.serverError) {
+			toast.error('Server error: ' + res.serverError)
+			setLoading(null)
 		} else {
-			toast.error(res?.data?.failure || t('common.error'))
+			toast.error(t('common.error'))
 			setLoading(null)
 		}
 	}
