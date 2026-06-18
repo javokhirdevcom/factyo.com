@@ -44,27 +44,34 @@ app.use(
 )
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
-const globalLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 300,
+// trust proxy is set above — disable express-rate-limit's redundant proxy check
+const rateLimitBase = {
 	standardHeaders: true,
 	legacyHeaders: false,
+	validate: { xForwardedForHeader: false },
+	handler: (req, res, _next, options) => {
+		res.status(options.statusCode).json({ failure: options.message.failure })
+	},
+}
+
+const globalLimiter = rateLimit({
+	...rateLimitBase,
+	windowMs: 15 * 60 * 1000,
+	max: 300,
 	message: { failure: 'Too many requests, please try again later.' },
 })
 
 const authLimiter = rateLimit({
+	...rateLimitBase,
 	windowMs: 15 * 60 * 1000,
 	max: 20,
-	standardHeaders: true,
-	legacyHeaders: false,
 	message: { failure: 'Too many login attempts. Please wait 15 minutes.' },
 })
 
 const otpLimiter = rateLimit({
+	...rateLimitBase,
 	windowMs: 10 * 60 * 1000,
 	max: 5,
-	standardHeaders: true,
-	legacyHeaders: false,
 	message: { failure: 'Too many OTP requests. Please wait 10 minutes.' },
 })
 
