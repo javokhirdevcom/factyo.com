@@ -11,6 +11,10 @@ const errorMiddleware = require('./middlewares/error.middleware')
 
 const app = express()
 
+// Railway / Vercel sit behind a reverse proxy — trust the first hop so
+// express-rate-limit reads the real client IP from X-Forwarded-For
+app.set('trust proxy', 1)
+
 // ─── Security headers ─────────────────────────────────────────────────────────
 app.use(helmet({
 	crossOriginResourcePolicy: { policy: 'cross-origin' },
