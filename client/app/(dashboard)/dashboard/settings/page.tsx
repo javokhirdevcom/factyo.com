@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { Building2, CreditCard, ArrowRight, Globe, Upload, User, X, AlertTriangle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useUploadThing } from '@/lib/uploadthing'
+import { useEffect } from 'react'
 
 type FormValues = z.infer<typeof profileSchema>
 
@@ -52,6 +53,23 @@ export default function SettingsPage() {
 			bic: user?.bic ?? '',
 		},
 	})
+
+	// defaultValues are computed once at mount (when session is still loading),
+	// so reset the form whenever the user data becomes available.
+	useEffect(() => {
+		if (!user) return
+		form.reset({
+			fullName: user.fullName ?? '',
+			businessName: user.businessName ?? '',
+			businessAddress: user.businessAddress ?? '',
+			vatNumber: user.vatNumber ?? '',
+			kvkNumber: user.kvkNumber ?? '',
+			phone: user.phone ?? '',
+			website: user.website ?? '',
+			iban: user.iban ?? '',
+			bic: user.bic ?? '',
+		})
+	}, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	const { startUpload: startLogoUpload } = useUploadThing('logoUploader')
 

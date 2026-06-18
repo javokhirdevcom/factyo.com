@@ -68,11 +68,11 @@ export const authOptions: NextAuthOptions = {
 				if (data?.user) {
 					session.currentUser = data.user
 				} else {
-					console.error('[session] Profile fetch returned no user for token.id:', token.id)
+					console.error('[session] Profile fetch: no user in response. token.id=%s data=%j', token.id, data)
 				}
 			} catch (err: unknown) {
 				const msg = err instanceof Error ? err.message : String(err)
-				console.error('[session] Failed to fetch user profile:', msg)
+				console.error('[session] Profile fetch threw. token.id=%s error=%s', token.id, msg)
 			}
 			return session
 		},

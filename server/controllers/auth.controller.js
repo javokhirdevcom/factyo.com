@@ -41,7 +41,8 @@ class AuthController {
 			const user = await userModel.create({ fullName, email, password: hashed, isVerified: false })
 			return res.json({ success: true, user: { _id: user._id, email: user.email } })
 		} catch (err) {
-			next(err)
+			console.error('[register] Error:', err.message)
+			return res.json({ failure: err.message || 'Registration failed.' })
 		}
 	}
 
@@ -76,7 +77,8 @@ class AuthController {
 			delete safe.password
 			return res.json({ success: true, token, user: safe })
 		} catch (err) {
-			next(err)
+			console.error('[login] Error:', err.message)
+			return res.json({ failure: err.message || 'Login failed.' })
 		}
 	}
 
@@ -102,7 +104,8 @@ class AuthController {
 			delete safe.password
 			return res.json({ success: true, token, user: safe })
 		} catch (err) {
-			next(err)
+			console.error('[oauthSignin] Error:', err.message)
+			return res.json({ failure: err.message || 'OAuth sign-in failed.' })
 		}
 	}
 
@@ -118,7 +121,8 @@ class AuthController {
 			if (!user) return res.json({ failure: 'User not found.' })
 			return res.json({ success: true, user })
 		} catch (err) {
-			next(err)
+			console.error('[verifyActivate] Error:', err.message)
+			return res.json({ failure: err.message || 'Verification failed.' })
 		}
 	}
 }

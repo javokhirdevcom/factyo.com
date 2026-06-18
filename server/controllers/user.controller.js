@@ -5,10 +5,14 @@ class UserController {
 	async getUserProfile(req, res, next) {
 		try {
 			const user = await userModel.findById(req.params.id).select('-password')
-			if (!user) return res.json({ failure: 'User not found' })
+			if (!user) {
+				console.error('[getUserProfile] No user for id:', req.params.id)
+				return res.json({ failure: 'User not found' })
+			}
 			return res.json({ success: true, user })
 		} catch (err) {
-			next(err)
+			console.error('[getUserProfile] Error for id:', req.params.id, '—', err.message)
+			return res.json({ failure: err.message || 'Failed to fetch user profile.' })
 		}
 	}
 
@@ -43,7 +47,8 @@ class UserController {
 			delete updated.password
 			return res.json({ success: 'Profile updated', user: updated })
 		} catch (err) {
-			next(err)
+			console.error('[updateProfile] Error:', err.message)
+			return res.json({ failure: err.message || 'Failed to update profile.' })
 		}
 	}
 
@@ -65,7 +70,8 @@ class UserController {
 			await user.save()
 			return res.json({ success: 'Password changed successfully' })
 		} catch (err) {
-			next(err)
+			console.error('[changePassword] Error:', err.message)
+			return res.json({ failure: err.message || 'Failed to change password.' })
 		}
 	}
 
