@@ -93,7 +93,15 @@ app.use(cookieParser())
 app.use(express.urlencoded({ extended: false }))
 
 // ─── NoSQL injection prevention ───────────────────────────────────────────────
-app.use(mongoSanitize())
+// express-mongo-sanitize's default middleware does `req.query = sanitize(req.query)`
+// which throws in newer Node.js versions because req.query is a getter-only property.
+// Manually sanitize req.body only — the only real NoSQL injection surface.
+app.use((req, res, next) => {
+	if (req.body && typeof req.body === 'object') {
+		req.body = mongoSanitize.sanitize(req.body)
+	}
+	next()
+})
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api', require('./routes/index'))
