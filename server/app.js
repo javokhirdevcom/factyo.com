@@ -4,11 +4,19 @@ const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
+const helmet = require('helmet')
+const mongoSanitize = require('express-mongo-sanitize')
+const rateLimit = require('express-rate-limit')
 const errorMiddleware = require('./middlewares/error.middleware')
 
 const app = express()
 
-// CORS sozlamalarini production uchun kuchaytiramiz
+// ─── Security headers ─────────────────────────────────────────────────────────
+app.use(helmet({
+	crossOriginResourcePolicy: { policy: 'cross-origin' },
+}))
+
+// ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
 	process.env.CLIENT_URL,
 	'https://www.factyo.com',
@@ -19,7 +27,6 @@ const allowedOrigins = [
 app.use(
 	cors({
 		origin: function (origin, callback) {
-			// Brauzerdan tashqari (masalan Postman) yoki ruxsat berilgan saytlar uchun
 			if (!origin || allowedOrigins.indexOf(origin) !== -1) {
 				callback(null, true)
 			} else {
@@ -28,11 +35,40 @@ app.use(
 		},
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 		credentials: true,
-		optionsSuccessStatus: 200, // Ba'zi eski brauzerlar (Safari/Edge) qotib qolmasligi uchun
+		optionsSuccessStatus: 200,
 	}),
 )
 
-// Stripe webhook MUST receive raw body — register before express.json()
+// ─── Rate limiting ────────────────────────────────────────────────────────────
+const globalLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 300,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { failure: 'Too many requests, please try again later.' },
+})
+
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { failure: 'Too many login attempts. Please wait 15 minutes.' },
+})
+
+const otpLimiter = rateLimit({
+	windowMs: 10 * 60 * 1000,
+	max: 5,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { failure: 'Too many OTP requests. Please wait 10 minutes.' },
+})
+
+app.use(globalLimiter)
+app.use('/api/auth', authLimiter)
+app.use('/api/otp', otpLimiter)
+
+// ─── Stripe webhook MUST receive raw body — register before express.json() ───
 const stripeController = require('./controllers/stripe.controller')
 app.post(
 	'/api/stripe/webhook',
@@ -40,19 +76,23 @@ app.post(
 	(req, res, next) => stripeController.handleWebhook(req, res, next),
 )
 
-app.use(express.json())
+// ─── Body parsing ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '2mb' }))
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: false }))
 
-// Barcha API routerlar
+// ─── NoSQL injection prevention ───────────────────────────────────────────────
+app.use(mongoSanitize())
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api', require('./routes/index'))
 
 app.use(errorMiddleware)
 
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
 const bootstrap = async () => {
 	try {
 		const PORT = process.env.PORT || 8080
-		// Default fallback sifatida localhost mongo ulanishini to'g'rilab qo'ydim
 		await mongoose.connect(
 			process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/factyo',
 		)

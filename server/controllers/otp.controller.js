@@ -11,7 +11,6 @@ class OtpController {
 			const config = await SystemConfig.getConfig()
 
 			if (!config.otpEnabled) {
-				// OTP disabled — auto-verify so user can skip the code step
 				await userModel.findOneAndUpdate({ email }, { isVerified: true })
 				return res.json({ success: true, skipOtp: true })
 			}
@@ -19,7 +18,8 @@ class OtpController {
 			await mailService.sendOtpMail(email)
 			return res.json({ success: true })
 		} catch (err) {
-			next(err)
+			console.error('[otp] sendOtp error:', err.message)
+			return res.json({ failure: err.message || 'Failed to send verification code. Please try again.' })
 		}
 	}
 
@@ -38,7 +38,8 @@ class OtpController {
 			await userModel.findOneAndUpdate({ email }, { isVerified: true }, { new: true })
 			return res.json({ success: true })
 		} catch (err) {
-			next(err)
+			console.error('[otp] verifyOtp error:', err.message)
+			return res.json({ success: false, message: err.message || 'Verification failed.' })
 		}
 	}
 }
