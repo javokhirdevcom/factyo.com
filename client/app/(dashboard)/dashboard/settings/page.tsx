@@ -18,7 +18,7 @@ import { toast } from 'sonner'
 import { Building2, CreditCard, ArrowRight, Globe, Upload, User, X, AlertTriangle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useUploadThing } from '@/lib/uploadthing'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type FormValues = z.infer<typeof profileSchema>
 
@@ -54,10 +54,15 @@ export default function SettingsPage() {
 		},
 	})
 
-	// defaultValues are computed once at mount (when session is still loading),
-	// so reset the form whenever the user data becomes available.
+	// defaultValues are set at mount before session loads; reset once when user data
+	// first arrives. Tracking by _id prevents resetting while the user is typing
+	// (NextAuth refreshes the session object reference periodically).
+	const initializedUserRef = useRef<string | null>(null)
 	useEffect(() => {
-		if (!user) return
+		if (!user?._id) return
+		const uid = String(user._id)
+		if (initializedUserRef.current === uid) return
+		initializedUserRef.current = uid
 		form.reset({
 			fullName: user.fullName ?? '',
 			businessName: user.businessName ?? '',
@@ -120,7 +125,7 @@ export default function SettingsPage() {
 		setReactivating(true)
 		const res = await reactivateSubscriptionAction({ userId: userId! })
 		if (res?.data?.success) {
-			toast.success('Subscription reactivated.')
+			toast.success(t('settings.reactivated'))
 			await update()
 		} else {
 			toast.error(res?.data?.failure || t('common.error'))
@@ -241,9 +246,9 @@ export default function SettingsPage() {
 					<div className='flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200'>
 						<AlertTriangle className='w-4 h-4 text-amber-500 shrink-0 mt-0.5' />
 						<div>
-							<p className='text-sm font-semibold text-amber-800'>Payment failed</p>
+							<p className='text-sm font-semibold text-amber-800'>{t('settings.paymentFailed')}</p>
 							<p className='text-xs text-amber-600 mt-0.5'>
-								Your last payment could not be processed. Please update your payment method to keep access.
+								{t('settings.paymentFailedDesc')}
 							</p>
 						</div>
 					</div>
@@ -254,8 +259,8 @@ export default function SettingsPage() {
 					<div className='flex items-start gap-3 p-3 rounded-xl bg-orange-50 border border-orange-200'>
 						<AlertTriangle className='w-4 h-4 text-orange-500 shrink-0 mt-0.5' />
 						<div className='flex-1'>
-							<p className='text-sm font-semibold text-orange-800'>Subscription cancels on {subEndsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-							<p className='text-xs text-orange-600 mt-0.5'>You still have full access until then.</p>
+							<p className='text-sm font-semibold text-orange-800'>{t('settings.cancellingOn')} {subEndsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+							<p className='text-xs text-orange-600 mt-0.5'>{t('settings.cancellingAccess')}</p>
 						</div>
 						<button
 							onClick={handleReactivate}
@@ -263,7 +268,7 @@ export default function SettingsPage() {
 							className='shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors disabled:opacity-60'
 						>
 							<RefreshCw className='w-3 h-3' />
-							{reactivating ? 'Reactivating…' : 'Reactivate'}
+							{reactivating ? t('settings.reactivating') : t('settings.reactivate')}
 						</button>
 					</div>
 				)}
@@ -294,7 +299,7 @@ export default function SettingsPage() {
 								onClick={subStatus === 'past_due' ? async (e) => { e.preventDefault(); const res = await getBillingPortalAction({ userId: userId! }); if (res?.data?.url) window.location.href = res.data.url } : undefined}
 								className='inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white factyo-gradient hover:opacity-90 transition-opacity'
 							>
-								{subStatus === 'past_due' ? 'Update payment' : t('settings.upgrade')} <ArrowRight className='w-4 h-4' />
+								{subStatus === 'past_due' ? t('settings.updatePayment') : t('settings.upgrade')} <ArrowRight className='w-4 h-4' />
 							</Link>
 						)}
 					</div>
@@ -323,7 +328,7 @@ export default function SettingsPage() {
 							)}
 						/>
 						<div>
-							<label className='text-sm text-gray-600 block mb-1.5'>Email</label>
+							<label className='text-sm text-gray-600 block mb-1.5'>{t('settings.emailLabel')}</label>
 							<Input value={user?.email ?? ''} disabled className='rounded-xl border-gray-200 bg-gray-50 text-gray-400' />
 							<p className='text-xs text-gray-400 mt-1'>{t('settings.emailCannotChange')}</p>
 						</div>

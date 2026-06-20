@@ -81,7 +81,7 @@ class UserController {
 				{
 					key: 'basic',
 					name: 'Basic',
-					price: 800,
+					price: 795,
 					currency: 'eur',
 					interval: 'month',
 					invoices: 10,
@@ -90,7 +90,7 @@ class UserController {
 				{
 					key: 'unlimited',
 					name: 'Unlimited',
-					price: 999,
+					price: 1250,
 					currency: 'eur',
 					interval: 'month',
 					invoices: null,

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 		follow: true,
 		googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
 	},
-	icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
+	icons: { icon: '/favicon.jpg', shortcut: '/favicon.jpg', apple: '/favicon.jpg' },
 	alternates: {
 		canonical: BASE_URL,
 		languages: { 'nl-NL': BASE_URL, 'en-US': `${BASE_URL}/en` },
@@ -110,8 +110,8 @@ const RootLayout: FC<ChildProps> = ({ children }) => {
 								description: "Online facturensoftware voor ZZP'ers en freelancers in Nederland. Maak, verstuur en beheer BTW-facturen.",
 								offers: [
 									{ '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'EUR', description: '3 facturen gratis' },
-									{ '@type': 'Offer', name: 'Basic', price: '8', priceCurrency: 'EUR', description: '10 facturen per maand' },
-									{ '@type': 'Offer', name: 'Unlimited', price: '9.99', priceCurrency: 'EUR', description: 'Onbeperkt facturen' },
+									{ '@type': 'Offer', name: 'Basic', price: '7.95', priceCurrency: 'EUR', description: '10 facturen per maand' },
+									{ '@type': 'Offer', name: 'Unlimited', price: '12.50', priceCurrency: 'EUR', description: 'Onbeperkt facturen' },
 								],
 								aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', ratingCount: '47', bestRating: '5', worstRating: '1' },
 								featureList: ['PDF facturen', 'E-mail verzending', 'BTW berekening', 'KvK & IBAN ondersteuning', 'Klantenbeheer'],

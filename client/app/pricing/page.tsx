@@ -14,14 +14,8 @@ const plans = [
 		nameKey: 'settings.planFree',
 		price: '€0',
 		perKey: 'pricing.forever',
-		desc: 'Try Factyo with your first invoices.',
-		features: [
-			'3 invoices total',
-			'PDF download',
-			'Email delivery',
-			'Client management',
-			'Business profile',
-		],
+		descKey: 'pricing.descFree',
+		featureKeys: ['pricing.feat3invoices', 'pricing.featPdf', 'pricing.featEmail', 'pricing.featClients', 'pricing.featProfile'],
 		ctaKey: 'pricing.getStartedFree',
 		href: '/register',
 		highlight: false,
@@ -30,17 +24,10 @@ const plans = [
 	{
 		key: 'basic',
 		nameKey: 'settings.planBasic',
-		price: '€8',
+		price: '€7.95',
 		perKey: 'pricing.perMonth',
-		desc: 'Great for freelancers who invoice regularly.',
-		features: [
-			'10 invoices per month',
-			'PDF download',
-			'Email delivery',
-			'Client management',
-			'Business profile',
-			'Priority support',
-		],
+		descKey: 'pricing.descBasic',
+		featureKeys: ['pricing.feat10invoices', 'pricing.featPdf', 'pricing.featEmail', 'pricing.featClients', 'pricing.featProfile', 'pricing.featSupport'],
 		ctaKey: 'pricing.choosePlan',
 		href: '#',
 		highlight: false,
@@ -49,18 +36,10 @@ const plans = [
 	{
 		key: 'unlimited',
 		nameKey: 'settings.planUnlimited',
-		price: '€9.99',
+		price: '€12.50',
 		perKey: 'pricing.perMonth',
-		desc: 'For busy freelancers who invoice without limits.',
-		features: [
-			'Unlimited invoices',
-			'PDF download',
-			'Email delivery',
-			'Client management',
-			'Business profile',
-			'Priority support',
-			'Billing portal',
-		],
+		descKey: 'pricing.descUnlimited',
+		featureKeys: ['pricing.featUnlimited', 'pricing.featPdf', 'pricing.featEmail', 'pricing.featClients', 'pricing.featProfile', 'pricing.featSupport', 'pricing.featPortal'],
 		ctaKey: 'pricing.choosePlan',
 		href: '#',
 		highlight: true,
@@ -172,7 +151,7 @@ export default function PricingPage() {
 									)}
 									{isCurrentPlan && (
 										<span className='absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1 whitespace-nowrap'>
-											<BadgeCheck className='w-3 h-3' /> Your current plan
+											<BadgeCheck className='w-3 h-3' /> {t('pricing.currentPlanLabel')}
 										</span>
 									)}
 
@@ -189,29 +168,29 @@ export default function PricingPage() {
 											</span>
 										</div>
 										<p className={`text-sm ${plan.highlight ? 'text-white/80' : 'text-gray-500'}`}>
-											{plan.desc}
+											{t(plan.descKey)}
 										</p>
 									</div>
 
 									<ul className='space-y-3 mb-8 flex-1'>
-										{plan.features.map(f => (
-											<li key={f} className='flex items-start gap-2.5 text-sm'>
+										{plan.featureKeys.map(fk => (
+											<li key={fk} className='flex items-start gap-2.5 text-sm'>
 												<Check className='w-4 h-4 shrink-0 mt-0.5' style={{ color: plan.highlight ? 'rgba(255,255,255,0.9)' : '#FF2D78' }} />
-												<span className={plan.highlight ? 'text-white/90' : 'text-gray-600'}>{f}</span>
+												<span className={plan.highlight ? 'text-white/90' : 'text-gray-600'}>{t(fk)}</span>
 											</li>
 										))}
 									</ul>
 
 									{isCurrentPlan ? (
 										<div className={`w-full py-3 rounded-xl text-sm font-bold text-center ${plan.highlight ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
-											Current plan
+											{t('pricing.currentPlanLabel')}
 										</div>
 									) : isDowngrade ? (
 										<Link
 											href='/dashboard/settings'
 											className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all border border-gray-200 hover:border-gray-900 text-gray-700 hover:text-gray-900`}
 										>
-											Manage in Settings
+											{t('pricing.manageSettings')}
 										</Link>
 									) : plan.stripe ? (
 										<button

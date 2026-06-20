@@ -19,26 +19,26 @@ const plans = [
 		nameKey: 'settings.planFree',
 		price: '€0',
 		perKey: 'pricing.forever',
-		desc: 'Try Factyo with your first invoices.',
-		features: ['3 invoices total', 'Email delivery', 'Client management', 'PDF download'],
+		descKey: 'pricing.descFree',
+		featureKeys: ['pricing.feat3invoices', 'pricing.featEmail', 'pricing.featClients', 'pricing.featPdf'],
 		href: '/register',
 		highlight: false,
 	},
 	{
 		nameKey: 'settings.planBasic',
-		price: '€8',
+		price: '€7.95',
 		perKey: 'pricing.perMonth',
-		desc: 'Perfect for freelancers with regular clients.',
-		features: ['10 invoices/month', 'Email delivery', 'Client management', 'PDF download', 'Priority support'],
+		descKey: 'pricing.descBasic',
+		featureKeys: ['pricing.feat10invoices', 'pricing.featEmail', 'pricing.featClients', 'pricing.featPdf', 'pricing.featSupport'],
 		href: '/register',
 		highlight: false,
 	},
 	{
 		nameKey: 'settings.planUnlimited',
-		price: '€9.99',
+		price: '€12.50',
 		perKey: 'pricing.perMonth',
-		desc: 'For busy freelancers who invoice without limits.',
-		features: ['Unlimited invoices', 'Email delivery', 'Client management', 'PDF download', 'Priority support', 'Billing portal'],
+		descKey: 'pricing.descUnlimited',
+		featureKeys: ['pricing.featUnlimited', 'pricing.featEmail', 'pricing.featClients', 'pricing.featPdf', 'pricing.featSupport', 'pricing.featPortal'],
 		href: '/register',
 		highlight: true,
 	},
@@ -49,26 +49,10 @@ export default function LandingPage() {
 	const { data: session } = useSession()
 
 	const features = [
-		{
-			icon: FileText,
-			title: 'Create Professional Invoices',
-			desc: 'Add line items, hours, rates, and VAT. Your invoice looks polished every time.',
-		},
-		{
-			icon: Mail,
-			title: 'Send via Email Instantly',
-			desc: 'Hit send and the client receives a beautiful HTML invoice directly in their inbox.',
-		},
-		{
-			icon: Users,
-			title: 'Manage Your Clients',
-			desc: 'Keep all your client details in one place. Pick them from a list when invoicing.',
-		},
-		{
-			icon: CreditCard,
-			title: 'Include Payment Details',
-			desc: 'Add your IBAN, BIC, and VAT number so clients can pay you without guessing.',
-		},
+		{ icon: FileText, titleKey: 'landing.feature1Title', descKey: 'landing.feature1Desc' },
+		{ icon: Mail,     titleKey: 'landing.feature2Title', descKey: 'landing.feature2Desc' },
+		{ icon: Users,    titleKey: 'landing.feature3Title', descKey: 'landing.feature3Desc' },
+		{ icon: CreditCard, titleKey: 'landing.feature4Title', descKey: 'landing.feature4Desc' },
 	]
 
 	return (
@@ -85,8 +69,8 @@ export default function LandingPage() {
 						</span>
 					</Link>
 					<nav className='hidden md:flex items-center gap-8 text-sm font-medium text-gray-600'>
-						<a href='#features' className='hover:text-gray-900 transition-colors'>Features</a>
-						<Link href='/pricing' className='hover:text-gray-900 transition-colors'>Pricing</Link>
+						<a href='#features' className='hover:text-gray-900 transition-colors'>{t('landing.navFeatures')}</a>
+						<Link href='/pricing' className='hover:text-gray-900 transition-colors'>{t('landing.navPricing')}</Link>
 					</nav>
 					<div className='flex items-center gap-3'>
 						{session ? (
@@ -224,16 +208,16 @@ export default function LandingPage() {
 						<p className='text-gray-500 text-lg'>{t('landing.featuresCopy')}</p>
 					</div>
 					<div className='grid sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-						{features.map(({ icon: Icon, title, desc }) => (
-							<div key={title} className='bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow'>
+						{features.map(({ icon: Icon, titleKey, descKey }) => (
+							<div key={titleKey} className='bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow'>
 								<div
 									className='w-10 h-10 rounded-xl flex items-center justify-center mb-4'
 									style={{ background: 'rgba(255,45,120,0.1)' }}
 								>
 									<Icon className='w-5 h-5' style={{ color: '#FF2D78' }} />
 								</div>
-								<h3 className='font-bold text-gray-900 mb-2'>{title}</h3>
-								<p className='text-gray-500 text-sm leading-relaxed'>{desc}</p>
+								<h3 className='font-bold text-gray-900 mb-2'>{t(titleKey)}</h3>
+								<p className='text-gray-500 text-sm leading-relaxed'>{t(descKey)}</p>
 							</div>
 						))}
 					</div>
@@ -276,17 +260,17 @@ export default function LandingPage() {
 										</span>
 									</div>
 									<p className={`text-sm mt-2 ${plan.highlight ? 'text-white/80' : 'text-gray-500'}`}>
-										{plan.desc}
+										{t(plan.descKey)}
 									</p>
 								</div>
 								<ul className='space-y-2 mb-6 flex-1'>
-									{plan.features.map(f => (
-										<li key={f} className='flex items-center gap-2 text-sm'>
+									{plan.featureKeys.map(fk => (
+										<li key={fk} className='flex items-center gap-2 text-sm'>
 											<Check
 												className='w-4 h-4 shrink-0'
 												style={{ color: plan.highlight ? 'rgba(255,255,255,0.9)' : '#FF2D78' }}
 											/>
-											<span className={plan.highlight ? 'text-white/90' : 'text-gray-600'}>{f}</span>
+											<span className={plan.highlight ? 'text-white/90' : 'text-gray-600'}>{t(fk)}</span>
 										</li>
 									))}
 								</ul>
@@ -339,17 +323,17 @@ export default function LandingPage() {
 								</span>
 							</Link>
 							<p className='text-xs text-gray-400 leading-relaxed'>
-								Professioneel factureren voor Nederlandse ZZP'ers en freelancers.
+								{t('landing.footerTagline')}
 							</p>
 						</div>
 
 						{/* Product */}
 						<div className='space-y-3'>
-							<p className='text-xs font-bold text-gray-900 uppercase tracking-wider'>Product</p>
+							<p className='text-xs font-bold text-gray-900 uppercase tracking-wider'>{t('landing.footerProduct')}</p>
 							<ul className='space-y-2 text-xs text-gray-500'>
-								<li><Link href='/pricing' className='hover:text-gray-800 transition-colors'>Prijzen</Link></li>
-								<li><Link href='/register' className='hover:text-gray-800 transition-colors'>Gratis beginnen</Link></li>
-								<li><Link href='/login' className='hover:text-gray-800 transition-colors'>Inloggen</Link></li>
+								<li><Link href='/pricing' className='hover:text-gray-800 transition-colors'>{t('landing.footerPricing')}</Link></li>
+								<li><Link href='/register' className='hover:text-gray-800 transition-colors'>{t('landing.footerStart')}</Link></li>
+								<li><Link href='/login' className='hover:text-gray-800 transition-colors'>{t('landing.footerLogin')}</Link></li>
 							</ul>
 						</div>
 
