@@ -8,18 +8,12 @@ class OtpController {
 			const { email } = req.body
 			if (!email) return res.json({ failure: 'Email is required.' })
 
-			const config = await SystemConfig.getConfig()
-
-			if (!config.otpEnabled) {
-				await userModel.findOneAndUpdate({ email }, { isVerified: true })
-				return res.json({ success: true, skipOtp: true })
-			}
-
-			await mailService.sendOtpMail(email)
-			return res.json({ success: true })
+			// OTP verification is permanently disabled — auto-verify user immediately
+			await userModel.findOneAndUpdate({ email }, { isVerified: true })
+			return res.json({ success: true, skipOtp: true })
 		} catch (err) {
 			console.error('[otp] sendOtp error:', err.message)
-			return res.json({ failure: err.message || 'Failed to send verification code. Please try again.' })
+			return res.json({ failure: err.message || 'Failed to verify account.' })
 		}
 	}
 

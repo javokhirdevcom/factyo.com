@@ -7,6 +7,7 @@ router.use(protectAdmin)
 // Stats & analytics
 router.get('/stats', (req, res, next) => adminController.getStats(req, res, next))
 router.get('/revenue', (req, res, next) => adminController.getRevenueData(req, res, next))
+router.get('/payments', (req, res, next) => adminController.getPayments(req, res, next))
 
 // User management
 router.get('/users', (req, res, next) => adminController.getUsers(req, res, next))

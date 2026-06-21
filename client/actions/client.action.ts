@@ -7,7 +7,7 @@ import { z } from 'zod'
 const clientInputSchema = z.object({
 	userId: z.string(),
 	name: z.string(),
-	email: z.string().email(),
+	email: z.string().email().optional().or(z.literal('')),
 	isCompany: z.boolean().default(false),
 	company: z.string().optional(),
 	kvk: z.string().optional(),

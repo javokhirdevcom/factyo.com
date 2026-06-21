@@ -5,12 +5,13 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
-import { FileText, LayoutDashboard, Users, Settings, LogOut, Menu, Shield } from 'lucide-react'
+import { FileText, LayoutDashboard, Users, Settings, LogOut, Menu, Shield, CreditCard } from 'lucide-react'
 import { ChildProps } from '@/types'
 
 const navItems = [
 	{ label: 'Overview', href: '/admin', icon: LayoutDashboard },
 	{ label: 'Users', href: '/admin/users', icon: Users },
+	{ label: 'Payments', href: '/admin/payments', icon: CreditCard },
 	{ label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

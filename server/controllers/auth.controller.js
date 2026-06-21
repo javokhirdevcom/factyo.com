@@ -58,11 +58,10 @@ class AuthController {
 				return res.json({ failure: 'No account found with this email.' })
 			}
 
+			// Auto-verify any legacy unverified accounts (OTP is disabled)
 			if (!user.isVerified) {
-				return res.json({
-					failure: 'Please verify your email before logging in.',
-					userId: user._id,
-				})
+				user.isVerified = true
+				await user.save()
 			}
 
 			const match = await bcrypt.compare(password, user.password)

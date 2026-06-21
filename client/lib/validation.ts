@@ -19,7 +19,7 @@ export const registerSchema = z
 
 export const clientSchema = z.object({
 	name: z.string().min(1, 'Client name is required'),
-	email: z.string().email('Valid email is required'),
+	email: z.string().email('Must be a valid email').optional().or(z.literal('')),
 	isCompany: z.boolean().default(false),
 	company: z.string().optional(),
 	kvk: z.string().optional(),

@@ -257,7 +257,7 @@ export default function ClientsPage() {
 									name='email'
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel className='text-sm text-gray-600'>{t('clients.email')} *</FormLabel>
+											<FormLabel className='text-sm text-gray-600'>{t('clients.email')}</FormLabel>
 											<FormControl>
 												<Input type='email' placeholder={t('clients.emailPlaceholder')} {...field} className='rounded-xl border-gray-200' />
 											</FormControl>

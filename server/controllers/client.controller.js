@@ -9,7 +9,8 @@ class ClientController {
 			const clients = await Client.find({ userId }).sort({ createdAt: -1 })
 			return res.json({ success: true, clients })
 		} catch (err) {
-			next(err)
+			console.error('[client] getClients error:', err.message)
+			return res.json({ failure: err.message || 'Failed to load clients.' })
 		}
 	}
 
@@ -22,7 +23,8 @@ class ClientController {
 			if (!client) return res.json({ failure: 'Client not found' })
 			return res.json({ success: true, client })
 		} catch (err) {
-			next(err)
+			console.error('[client] getClient error:', err.message)
+			return res.json({ failure: err.message || 'Failed to load client.' })
 		}
 	}
 
@@ -32,12 +34,13 @@ class ClientController {
 			if (!userId) return res.status(401).json({ failure: 'Unauthorized' })
 
 			const { name, email, isCompany, company, kvk, btw, address } = req.body
-			if (!name || !email) return res.json({ failure: 'Name and email are required.' })
+			if (!name) return res.json({ failure: 'Client name is required.' })
 
 			const client = await Client.create({ userId, name, email, isCompany, company, kvk, btw, address })
 			return res.json({ success: true, client })
 		} catch (err) {
-			next(err)
+			console.error('[client] createClient error:', err.message)
+			return res.json({ failure: err.message || 'Failed to create client.' })
 		}
 	}
 
@@ -55,7 +58,8 @@ class ClientController {
 			if (!client) return res.json({ failure: 'Client not found' })
 			return res.json({ success: true, client })
 		} catch (err) {
-			next(err)
+			console.error('[client] updateClient error:', err.message)
+			return res.json({ failure: err.message || 'Failed to update client.' })
 		}
 	}
 
@@ -68,7 +72,8 @@ class ClientController {
 			if (!client) return res.json({ failure: 'Client not found' })
 			return res.json({ success: true })
 		} catch (err) {
-			next(err)
+			console.error('[client] deleteClient error:', err.message)
+			return res.json({ failure: err.message || 'Failed to delete client.' })
 		}
 	}
 }

@@ -141,6 +141,16 @@ export const deleteUserAction = actionClient
 		return JSON.parse(JSON.stringify(data))
 	})
 
+export const getAdminPaymentsAction = actionClient
+	.schema(z.object({ userId: z.string(), limit: z.number().optional(), starting_after: z.string().optional() }))
+	.action(async ({ parsedInput }) => {
+		const { userId, limit = 50, starting_after } = parsedInput
+		const params = new URLSearchParams({ limit: String(limit) })
+		if (starting_after) params.set('starting_after', starting_after)
+		const { data } = await axiosClient.get(`/api/admin/payments?${params}`, { headers: h(userId) })
+		return JSON.parse(JSON.stringify(data))
+	})
+
 export const getAdminSettingsAction = actionClient
 	.schema(z.object({ userId: z.string() }))
 	.action(async ({ parsedInput }) => {

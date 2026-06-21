@@ -251,6 +251,48 @@ class AdminController {
 		}
 	}
 
+	// ─── Stripe payments ─────────────────────────────────────────────────────
+	async getPayments(req, res, next) {
+		try {
+			const limit = Math.min(Number(req.query.limit) || 50, 100)
+			const starting_after = req.query.starting_after
+
+			const params = { limit, status: 'paid' }
+			if (starting_after) params.starting_after = starting_after
+
+			const [invoices, balance] = await Promise.all([
+				stripe.invoices.list({ ...params, expand: ['data.customer'] }),
+				stripe.balance.retrieve(),
+			])
+
+			const payments = invoices.data.map(inv => ({
+				id: inv.id,
+				amount: inv.amount_paid,
+				currency: inv.currency,
+				date: inv.created * 1000,
+				customerEmail: typeof inv.customer === 'object' ? inv.customer.email : null,
+				customerName: typeof inv.customer === 'object' ? inv.customer.name : null,
+				description: inv.lines?.data?.[0]?.description || '',
+				status: inv.status,
+			}))
+
+			const available = balance.available.reduce((s, b) => s + b.amount, 0)
+			const pending = balance.pending.reduce((s, b) => s + b.amount, 0)
+			const currency = balance.available[0]?.currency ?? 'eur'
+
+			return res.json({
+				success: true,
+				payments,
+				balance: { available, pending, currency },
+				hasMore: invoices.has_more,
+				lastId: invoices.data[invoices.data.length - 1]?.id ?? null,
+			})
+		} catch (err) {
+			console.error('[admin] getPayments error:', err.message)
+			return res.json({ failure: err.message || 'Failed to fetch payments.' })
+		}
+	}
+
 	// ─── Settings ─────────────────────────────────────────────────────────────
 	async getSettings(req, res, next) {
 		try {
