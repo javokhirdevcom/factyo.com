@@ -35,7 +35,7 @@ export interface IClient {
 	_id: string
 	userId: string
 	name: string
-	email: string
+	email?: string
 	isCompany?: boolean
 	company?: string
 	kvk?: string
